@@ -12,38 +12,44 @@ from collections import Counter
 # Load the dataset
 data = pd.read_csv("weather_forecast_data.csv") 
 
-print("\nTask 1: Preprocessing")
+print("Task 1: Preprocessing")
 
 print("Step 1: Checking for missing data:")
 missing_data = data.isnull().sum()
 print(missing_data)
+print("-----------------------------------------------------------------\n")
 
-
-print("\nStep 2: Handling missing data")
 # Replacing missing values with the mean of each numeric column
-# Ensures numeric columns are filled with the column's mean
+print("Step 2: Handling missing data")
+data_dropped = data.dropna()
+numeric_columns = ['Temperature', 'Humidity', 'Wind_Speed', 'Cloud_Cover', 'Pressure']
 data_filled = data.copy()
-for column in data_filled.select_dtypes(include=["float64", "int64"]).columns:
+for column in numeric_columns:
     data_filled[column] = data_filled[column].fillna(data_filled[column].mean())
 
+print("Missing values after handling")
+print(data_filled.isnull().sum())
+print("-------------------------------------------------")
 
-print("\nClass Distribution in Rain Target:")
+print("Class Distribution in Rain Target:")
 if "Rain" in data_filled.columns:
     print(data_filled["Rain"].value_counts())
+    print("-----------------------------------------------------------------\n")
 
 
 # Scales numeric features to a standard range (mean=0, variance=1)
-print("\nStep 3: Feature scaling")
+print("Step 3: Feature scaling")
 numeric_features = data_filled.select_dtypes(include=["float64", "int64"]).columns
 scaler = StandardScaler()
 data_scaled = data_filled.copy()
 data_scaled[numeric_features] = scaler.fit_transform(data_filled[numeric_features])
 data_scaled.to_csv("scaled_features.csv", index=False)
 print("Scaled features saved to 'scaled_features.csv'")
+print("-----------------------------------------------------------------\n")
 
 
 # Divides the dataset into training and testing subsets
-print("\nStep 4: Splitting the data")
+print("Step 4: Splitting the data")
 X = data_scaled.drop("Rain", axis=1)  # Features
 y = data_scaled["Rain"]  # Target 
 
@@ -51,37 +57,33 @@ y = data_scaled["Rain"]  # Target
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 print(f"Training set size: {len(X_train)}")
 print(f"Test set size: {len(X_test)}")
+print("-----------------------------------------------------------------\n")
 
 # Step 5: Training models using scikit-learn
-print("\nStep 5: Training a Decision Tree Model")
-
-# Initializing the decision tree model
-# DecisionTreeClassifier is used for classification tasks
+print("Step 5: Training a Decision Tree Model")
 dt = DecisionTreeClassifier()
-
-# Training the model
-# Fits the model to the training data
 dt.fit(X_train, y_train)
 
 # Predicts outcomes on the test data
-print("\nStep 6: Making predictions")
+print("Step 6: Making predictions")
 y_pred = dt.predict(X_test)
 
 # Calculates accuracy, precision, and recall for the Decision Tree model
-print("\nStep 7: Evaluating the model")
+print("Step 7: Evaluating the model")
 accuracy = accuracy_score(y_test, y_pred)
-print(f"Accuracy of the Decision Tree model: {accuracy:.2f}")
+print(f"Accuracy of the Decision Tree model: {accuracy:.4f}")
+print("-----------------------------------------------------------------\n")
 
-print("\nDecision Tree Metrics:")
-print(f"Precision: {precision_score(y_test, y_pred, average='weighted'):.2f}")
-print(f"Recall: {recall_score(y_test, y_pred, average='weighted'):.2f}")
+print("Decision Tree Metrics:")
+print(f"Precision: {precision_score(y_test, y_pred, average='weighted'):.4f}")
+print(f"Recall: {recall_score(y_test, y_pred, average='weighted'):.4f}")
+print("-----------------------------------------------------------------\n")
 
-# Feature importance for Decision Tree
 # Identifies which features are most impactful in the tree's decisions
-print("\nFeature Importances (Decision Tree):")
+print("Feature Importances (Decision Tree):")
 feature_importances = pd.Series(dt.feature_importances_, index=X.columns).sort_values(ascending=False)
 print(feature_importances)
-
+print("-----------------------------------------------------------------\n")
 
 # Visualizes the Decision Tree and saves it as a file
 plt.figure(figsize=(20, 10))
@@ -93,24 +95,26 @@ plt.show()
 # Print the decision tree rules as text
 # Explains the tree's logic with textual descriptions of node splits
 tree_rules = export_text(dt, feature_names=list(X.columns))
-print("\nDecision Tree Rules:")
+print("Decision Tree Rules:")
 print(tree_rules)
+print("-----------------------------------------------------------------\n")
 
 # Training a Naive Bayes Model
-print("\nNaïve Bayes Model")
+print("Naïve Bayes Model")
 nb = GaussianNB()
 nb.fit(X_train, y_train)
 y_pred_nb = nb.predict(X_test)
 
 # Evaluating the Naive Bayes Model
-print("\nNaïve Bayes Metrics:")
+print("Naïve Bayes Metrics:")
 print(f"Accuracy: {accuracy_score(y_test, y_pred_nb):.2f}")
-print(f"Precision: {precision_score(y_test, y_pred_nb, average='weighted'):.2f}")
-print(f"Recall: {recall_score(y_test, y_pred_nb, average='weighted'):.2f}")
+print(f"Precision: {precision_score(y_test, y_pred_nb, average='weighted'):.4f}")
+print(f"Recall: {recall_score(y_test, y_pred_nb, average='weighted'):.4f}")
+print("-----------------------------------------------------------------\n")
 
 # Custom kNN Model Implementation
-class CustomKNN:
-    def __init__(self, k=3):
+class customKNN:
+    def __init__(self, k=5):
         self.k = k
 
     def fit(self, X, y):
@@ -127,43 +131,47 @@ class CustomKNN:
             predictions.append(Counter(k_labels).most_common(1)[0][0])
         return predictions
 
-custom_knn = CustomKNN(k=5)
+custom_knn = customKNN(k=5)
 custom_knn.fit(X_train.values, y_train.values)
 custom_predictions = custom_knn.predict(X_test.values)
 
 # Evaluate Custom kNN Model
-print("\nCustom kNN Metrics:")
-print(f"Accuracy: {accuracy_score(y_test, custom_predictions):.2f}")
-print(f"Precision: {precision_score(y_test, custom_predictions, average='weighted'):.2f}")
-print(f"Recall: {recall_score(y_test, custom_predictions, average='weighted'):.2f}")
+print("Custom kNN Metrics:")
+print(f"Accuracy: {accuracy_score(y_test, custom_predictions):.4f}")
+print(f"Precision: {precision_score(y_test, custom_predictions, average='weighted'):.4f}")
+print(f"Recall: {recall_score(y_test, custom_predictions, average='weighted'):.4f}")
+print("-----------------------------------------------------------------\n")
 
 # Scikit-learn kNN Model
-print("\nScikit-learn kNN Model")
+print("Scikit-learn kNN Model")
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(X_train, y_train)
 y_pred_knn = knn.predict(X_test)
 
 # Evaluate Scikit-learn kNN Model
-print("\nScikit-learn kNN Metrics:")
-print(f"Accuracy: {accuracy_score(y_test, y_pred_knn):.2f}")
-print(f"Precision: {precision_score(y_test, y_pred_knn, average='weighted'):.2f}")
-print(f"Recall: {recall_score(y_test, y_pred_knn, average='weighted'):.2f}")
+print("Scikit-learn kNN Metrics:")
+print(f"Accuracy: {accuracy_score(y_test, y_pred_knn):.4f}")
+print(f"Precision: {precision_score(y_test, y_pred_knn, average='weighted'):.4f}")
+print(f"Recall: {recall_score(y_test, y_pred_knn, average='weighted'):.4f}")
+print("-----------------------------------------------------------------\n")
 
 # Performance Comparison for Custom and Scikit-learn kNN Models
-print("\nPerformance Comparison between Custom kNN and Scikit-learn kNN:")
-print(f"Custom kNN Accuracy: {accuracy_score(y_test, custom_predictions):.2f}")
-print(f"Scikit-learn kNN Accuracy: {accuracy_score(y_test, y_pred_knn):.2f}")
-print(f"Custom kNN Precision: {precision_score(y_test, custom_predictions, average='weighted'):.2f}")
-print(f"Scikit-learn kNN Precision: {precision_score(y_test, y_pred_knn, average='weighted'):.2f}")
-print(f"Custom kNN Recall: {recall_score(y_test, custom_predictions, average='weighted'):.2f}")
-print(f"Scikit-learn kNN Recall: {recall_score(y_test, y_pred_knn, average='weighted'):.2f}")
+print("Performance Comparison between Custom kNN and Scikit-learn kNN:")
+print(f"Custom kNN Accuracy: {accuracy_score(y_test, custom_predictions):.4f}")
+print(f"Scikit-learn kNN Accuracy: {accuracy_score(y_test, y_pred_knn):.4f}")
+print(f"Custom kNN Precision: {precision_score(y_test, custom_predictions, average='weighted'):.4f}")
+print(f"Scikit-learn kNN Precision: {precision_score(y_test, y_pred_knn, average='weighted'):.4f}")
+print(f"Custom kNN Recall: {recall_score(y_test, custom_predictions, average='weighted'):.4f}")
+print(f"Scikit-learn kNN Recall: {recall_score(y_test, y_pred_knn, average='weighted'):.4f}")
+print("-----------------------------------------------------------------\n")
 
 # Evaluate kNN with Different k Values
 for k_value in [1, 3, 5, 7, 9]:
-    custom_knn = CustomKNN(k=k_value)
+    custom_knn = customKNN(k=k_value)
     custom_knn.fit(X_train.values, y_train.values)
     custom_predictions = custom_knn.predict(X_test.values)
-    print(f"\nMetrics for k={k_value} in Custom kNN:")
-    print(f"Accuracy: {accuracy_score(y_test, custom_predictions):.2f}")
-    print(f"Precision: {precision_score(y_test, custom_predictions, average='weighted'):.2f}")
-    print(f"Recall: {recall_score(y_test, custom_predictions, average='weighted'):.2f}")
+    print(f"Metrics for k={k_value} in Custom kNN:")
+    print(f"Accuracy: {accuracy_score(y_test, custom_predictions):.4f}")
+    print(f"Precision: {precision_score(y_test, custom_predictions, average='weighted'):.4f}")
+    print(f"Recall: {recall_score(y_test, custom_predictions, average='weighted'):.4f}")
+    print("-----------------------------------------------------------------\n")
